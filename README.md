@@ -28,6 +28,7 @@ FantasyPros only allows selecting 2 experts at a time to view consensus rankings
 
 - Python 3.8 or higher
 - Chrome/Chromium browser (automatically installed by Playwright)
+- **FantasyPros account** (free registration required at [fantasypros.com](https://www.fantasypros.com))
 
 ## Installation
 
@@ -64,7 +65,7 @@ cp env.example .env
 Edit the `.env` file with your settings:
 
 ```env
-# Required: FantasyPros Credentials
+# Required: FantasyPros Credentials (login required for Pick Experts feature)
 FANTASYPROS_EMAIL=your_email@example.com
 FANTASYPROS_PASSWORD=your_password
 
@@ -186,9 +187,11 @@ Player ID,Player,Andrew Erickson (FantasyPros),Pat Fitzmaurice (FantasyPros),...
 ### Common Issues
 
 1. **Login fails**:
-   - Verify credentials in `.env` file
-   - Check if FantasyPros requires captcha
-   - Try running with `HEADLESS=false` to see what's happening
+   - Verify credentials in `.env` file (must be valid FantasyPros account)
+   - Ensure you can log in manually at [fantasypros.com/accounts/signin/](https://www.fantasypros.com/accounts/signin/)
+   - Try running with `HEADLESS=false` to see login process
+   - If CAPTCHA appears, solve it manually (scraper will wait 30 seconds)
+   - Check for error messages in the console output
 
 2. **Expert not found**:
    - Expert names must match exactly (including site name in parentheses)

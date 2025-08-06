@@ -14,15 +14,19 @@ PIP_VENV := $(VENV_BIN)/pip
 help:
 	@echo "FantasyPros Scraper - Available Commands:"
 	@echo "========================================"
-	@echo "make setup     - Complete first-time setup"
-	@echo "make test      - Run all tests"
-	@echo "make scrape    - Run the scraper"
-	@echo "make analyze   - Analyze latest rankings"
-	@echo "make clean     - Clean output files"
-	@echo "make update    - Update dependencies"
-	@echo "make shell     - Open Python shell with imports"
+	@echo "make setup           - Complete first-time setup"
+	@echo "make test            - Run all tests"
+	@echo "make scrape          - Run the scraper"
+	@echo "make scrape-headless - Run scraper without browser window"
+	@echo "make debug           - Run with debug logging + screenshots"
+	@echo "make debug-visible   - Run with debug + visible browser"
+	@echo "make analyze         - Analyze latest rankings"
+	@echo "make clean           - Clean output files"
+	@echo "make update          - Update dependencies"
+	@echo "make shell           - Open Python shell with imports"
 	@echo ""
 	@echo "Quick start: make setup && make test"
+	@echo "Debug login issues: make debug-visible"
 
 # Create virtual environment
 venv:
@@ -146,7 +150,12 @@ check-env:
 # Run scraper with debug logging
 debug:
 	@echo "Running scraper with debug logging..."
-	@$(PYTHON_VENV) -u scraper.py 2>&1 | tee "output/scraper_$$(date +%Y%m%d_%H%M%S).log"
+	@DEBUG=true $(PYTHON_VENV) -u scraper.py 2>&1 | tee "output/scraper_$$(date +%Y%m%d_%H%M%S).log"
+
+# Run scraper with debug logging (no headless)
+debug-visible:
+	@echo "Running scraper with debug logging (visible browser)..."
+	@DEBUG=true HEADLESS=false $(PYTHON_VENV) -u scraper.py 2>&1 | tee "output/scraper_$$(date +%Y%m%d_%H%M%S).log"
 
 # Quick commands for common player lookups
 player:
