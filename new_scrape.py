@@ -333,7 +333,48 @@ class FantasyProsNewScraper:
                                 movement = tooltip || 'Falling';
                             }
                             
-                            const ecrVsAdpDiv = cells[8] ? cells[8].querySelector('.ecr-vs-adp-wrap') : null;
+                            // Extract BYE week (cells[4])
+                            const bye = cells[4] ? cells[4].textContent.trim() : '';
+                            
+                            // Extract SOS (cells[5]) - get only the first sr-only span for star rating
+                            let sos = '';
+                            let sosTooltip = '';
+                            if (cells[5]) {
+                                const sosDiv = cells[5].querySelector('.template-stars');
+                                if (sosDiv) {
+                                    sosTooltip = sosDiv.getAttribute('data-tooltip') || '';
+                                    // Get just the first sr-only span text which contains "X out of 5 stars"
+                                    const firstSrOnly = sosDiv.querySelector('.sr-only');
+                                    sos = firstSrOnly ? firstSrOnly.textContent.trim() : '';
+                                }
+                            }
+                            
+                            // Extract ECR VS ADP (cells[6])
+                            const ecrVsAdpDiv = cells[6] ? cells[6].querySelector('.ecr-vs-adp-wrap') : null;
+                            const ecrVsAdp = ecrVsAdpDiv ? ecrVsAdpDiv.textContent.trim() : '';
+                            const ecrVsAdpTooltip = ecrVsAdpDiv ? ecrVsAdpDiv.getAttribute('data-tooltip') : '';
+                            
+                            // Extract AVG. DIFF (cells[7])
+                            let avgDiff = '';
+                            let avgDiffTooltip = '';
+                            if (cells[7]) {
+                                const avgDiffSpan = cells[7].querySelector('span[data-tooltip]');
+                                if (avgDiffSpan) {
+                                    avgDiff = avgDiffSpan.textContent.trim();
+                                    avgDiffTooltip = avgDiffSpan.getAttribute('data-tooltip') || '';
+                                }
+                            }
+                            
+                            // Extract % OVER (cells[8])
+                            let percentOver = '';
+                            let percentOverTooltip = '';
+                            if (cells[8]) {
+                                const percentOverSpan = cells[8].querySelector('span[data-tooltip]');
+                                if (percentOverSpan) {
+                                    percentOver = percentOverSpan.textContent.trim();
+                                    percentOverTooltip = percentOverSpan.getAttribute('data-tooltip') || '';
+                                }
+                            }
                             
                             rows.push({
                                 tier: currentTier,
@@ -342,12 +383,15 @@ class FantasyProsNewScraper:
                                 playerId: playerLink ? playerLink.getAttribute('fp-player-id') : '',
                                 team: teamSpan ? teamSpan.textContent.replace(/[()]/g, '').trim() : '',
                                 position: cells[3] ? cells[3].textContent.trim() : '',
-                                best: cells[4] ? cells[4].textContent.trim() : '',
-                                worst: cells[5] ? cells[5].textContent.trim() : '',
-                                average: cells[6] ? cells[6].textContent.trim() : '',
-                                stdDev: cells[7] ? cells[7].textContent.trim() : '',
-                                ecrVsAdp: ecrVsAdpDiv ? ecrVsAdpDiv.textContent.trim() : '',
-                                ecrVsAdpTooltip: ecrVsAdpDiv ? ecrVsAdpDiv.getAttribute('data-tooltip') : '',
+                                bye: bye,
+                                sos: sos,
+                                sosTooltip: sosTooltip,
+                                ecrVsAdp: ecrVsAdp,
+                                ecrVsAdpTooltip: ecrVsAdpTooltip,
+                                avgDiff: avgDiff,
+                                avgDiffTooltip: avgDiffTooltip,
+                                percentOver: percentOver,
+                                percentOverTooltip: percentOverTooltip,
                                 movement: movement
                             });
                         }
@@ -365,7 +409,8 @@ class FantasyProsNewScraper:
                 with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
                     if table_data:
                         fieldnames = ['tier', 'rank', 'playerName', 'playerId', 'team', 'position', 
-                                    'best', 'worst', 'average', 'stdDev', 'ecrVsAdp', 'ecrVsAdpTooltip', 'movement']
+                                    'bye', 'sos', 'sosTooltip', 'ecrVsAdp', 'ecrVsAdpTooltip', 
+                                    'avgDiff', 'avgDiffTooltip', 'percentOver', 'percentOverTooltip', 'movement']
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         writer.writeheader()
                         writer.writerows(table_data)
@@ -385,7 +430,7 @@ class FantasyProsNewScraper:
                 # Print first few entries as confirmation
                 logger.info("Sample of scraped data:")
                 for i, player in enumerate(table_data[:5]):
-                    logger.info(f"  {player['rank']}. {player['playerName']} ({player['team']}) - {player['position']} - Avg: {player['average']}")
+                    logger.info(f"  {player['rank']}. {player['playerName']} ({player['team']}) - {player['position']} - BYE: {player['bye']} - SOS: {player['sos']} - ECR vs ADP: {player['ecrVsAdp']}")
             else:
                 logger.warning("No data extracted from the rankings table.")
                 
