@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Custom styles for fantasy football app */
 .tier-1 { @apply bg-green-100 border-green-300; }
