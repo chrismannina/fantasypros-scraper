@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
 """
-Updated FantasyPros Scraper - Extracts embedded JSON data from JavaScript variables
+FantasyPros Scraper
 """
 import requests
 from bs4 import BeautifulSoup

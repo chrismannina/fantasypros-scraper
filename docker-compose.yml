@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: fantasypros
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: fantasypros
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fantasypros"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Main Application
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://fantasypros:password@postgres:5432/fantasypros
+      DEBUG: "true"
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    command: python main.py server
+
+  # Scheduler (separate container)
+  scheduler:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://fantasypros:password@postgres:5432/fantasypros
+      DEBUG: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    command: python main.py scheduler
+
+volumes:
+  postgres_data: 
