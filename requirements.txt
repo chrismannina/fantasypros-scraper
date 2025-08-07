@@ -1,6 +1,0 @@
-playwright
-pandas
-python-dotenv
-numpy
-openpyxl
-colorlog 
