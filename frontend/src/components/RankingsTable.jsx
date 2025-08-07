@@ -14,11 +14,49 @@ const RankingsTable = ({ position, scoring, onPlayerClick }) => {
       setError(null)
       
       try {
-        const response = await fetch(`/api/rankings/${position}?week=0&scoring=${scoring}&limit=100`)
-        if (!response.ok) throw new Error('Failed to fetch rankings')
+        let combinedRankings = []
         
-        const data = await response.json()
-        setRankings(data.players || [])
+        if (position === 'Overall') {
+          // Fetch all positions and combine them
+          const positions = ['QB', 'RB', 'WR', 'TE', 'K', 'DST']
+          const promises = positions.map(pos => 
+            fetch(`/api/rankings/${pos}?week=0&scoring=${scoring}&limit=100`)
+              .then(res => res.ok ? res.json() : { players: [] })
+              .catch(() => ({ players: [] }))
+          )
+          
+          const results = await Promise.all(promises)
+          combinedRankings = results.flatMap(result => result.players || [])
+          
+          // Sort by overall rank
+          combinedRankings.sort((a, b) => a.rank - b.rank)
+          
+        } else if (position === 'FLEX') {
+          // FLEX includes RB, WR, TE only
+          const flexPositions = ['RB', 'WR', 'TE']
+          const promises = flexPositions.map(pos => 
+            fetch(`/api/rankings/${pos}?week=0&scoring=${scoring}&limit=100`)
+              .then(res => res.ok ? res.json() : { players: [] })
+              .catch(() => ({ players: [] }))
+          )
+          
+          const results = await Promise.all(promises)
+          combinedRankings = results.flatMap(result => result.players || [])
+          
+          // Sort by overall rank
+          combinedRankings.sort((a, b) => a.rank - b.rank)
+          
+        } else {
+          // Regular position - use existing logic
+          const response = await fetch(`/api/rankings/${position}?week=0&scoring=${scoring}&limit=100`)
+          if (!response.ok) throw new Error('Failed to fetch rankings')
+          
+          const data = await response.json()
+          combinedRankings = data.players || []
+        }
+        
+        setRankings(combinedRankings)
+        
       } catch (err) {
         setError(err.message)
       } finally {
@@ -29,16 +67,16 @@ const RankingsTable = ({ position, scoring, onPlayerClick }) => {
     fetchRankings()
   }, [position, scoring])
 
-  // Generate tier based on rank_std
+  // Generate tier based on rank_std - MUCH more realistic thresholds
   const getTier = (rankStd, rank) => {
     if (!rankStd) return null
     
-    // Simple tier logic based on standard deviation
-    if (rankStd <= 0.5) return 1 // Very consistent
-    if (rankStd <= 1.0) return 2 // Consistent
-    if (rankStd <= 1.5) return 3 // Some disagreement
-    if (rankStd <= 2.0) return 4 // High disagreement
-    return 5 // Very high disagreement
+    // Realistic tier logic for fantasy football data
+    if (rankStd <= 2.0) return 1 // Elite consensus (very low disagreement)
+    if (rankStd <= 4.0) return 2 // Solid consensus (low disagreement)
+    if (rankStd <= 6.0) return 3 // Decent consensus (moderate disagreement)
+    if (rankStd <= 10.0) return 4 // Risky consensus (high disagreement)
+    return 5 // Volatile (very high disagreement)
   }
 
   const getTierClass = (tier) => {
@@ -74,13 +112,16 @@ const RankingsTable = ({ position, scoring, onPlayerClick }) => {
     )
   }
 
+  const displayPosition = position
+  const scoringLabel = scoring === 'STD' ? 'Standard' : scoring === 'PPR' ? 'PPR' : 'Half PPR'
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">
-            {position} Rankings - {scoring === 'STD' ? 'Standard' : scoring === 'PPR' ? 'PPR' : 'Half PPR'}
+            {displayPosition} Rankings - {scoringLabel}
           </h2>
           <div className="text-sm text-gray-500">
             {rankings.length} players
@@ -119,7 +160,7 @@ const RankingsTable = ({ position, scoring, onPlayerClick }) => {
                 const tier = getTier(player.rank_std, player.rank)
                 return (
                   <tr
-                    key={`${player.player_name}-${index}`}
+                    key={`${player.player_name}-${player.position}-${index}`}
                     className={`table-row ${getTierClass(tier)}`}
                     onClick={() => onPlayerClick(player)}
                   >

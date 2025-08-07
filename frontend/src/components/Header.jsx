@@ -12,7 +12,10 @@ const Header = ({
     { value: 'HALF', label: 'Half PPR', desc: '0.5 point per reception' }
   ]
 
-  const scoringDependentPositions = ['RB', 'WR', 'TE']
+  // Add Overall and FLEX to positions if they exist in the data
+  const allPositions = ['Overall', 'FLEX', ...positions.filter(p => !['Overall', 'FLEX'].includes(p))]
+  
+  const scoringDependentPositions = ['RB', 'WR', 'TE', 'FLEX', 'Overall']
   const showScoringSelector = scoringDependentPositions.includes(selectedPosition)
 
   return (
@@ -41,7 +44,7 @@ const Header = ({
                 onChange={(e) => onPositionChange(e.target.value)}
                 className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-fantasy-blue focus:border-fantasy-blue"
               >
-                {positions.map(position => (
+                {allPositions.map(position => (
                   <option key={position} value={position}>
                     {position}
                   </option>
@@ -49,7 +52,7 @@ const Header = ({
               </select>
             </div>
 
-            {/* Scoring Selector - Only for RB, WR, TE */}
+            {/* Scoring Selector - Only for RB, WR, TE, FLEX, Overall */}
             {showScoringSelector && (
               <div className="flex items-center space-x-2">
                 <label className="text-sm font-medium text-gray-700">Scoring:</label>

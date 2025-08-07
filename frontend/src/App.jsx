@@ -6,8 +6,8 @@ import PlayerModal from './components/PlayerModal'
 import Stats from './components/Stats'
 
 function App() {
-  const [selectedPosition, setSelectedPosition] = useState('QB')
-  const [selectedScoring, setSelectedScoring] = useState('STD')
+  const [selectedPosition, setSelectedPosition] = useState('Overall')
+  const [selectedScoring, setSelectedScoring] = useState('PPR')
   const [selectedPlayer, setSelectedPlayer] = useState(null)
   const [positions, setPositions] = useState([])
   const [apiStats, setApiStats] = useState(null)

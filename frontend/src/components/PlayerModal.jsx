@@ -26,12 +26,14 @@ const PlayerModal = ({ player, onClose }) => {
     fetchPlayerData()
   }, [player])
 
+  // SAME tier logic as other components
   const getTier = (rankStd) => {
     if (!rankStd) return null
-    if (rankStd <= 0.5) return { tier: 1, name: 'Elite' }
-    if (rankStd <= 1.0) return { tier: 2, name: 'Solid' }
-    if (rankStd <= 1.5) return { tier: 3, name: 'Decent' }
-    if (rankStd <= 2.0) return { tier: 4, name: 'Risky' }
+    // Realistic tier logic for fantasy football data
+    if (rankStd <= 2.0) return { tier: 1, name: 'Elite' }
+    if (rankStd <= 4.0) return { tier: 2, name: 'Solid' }
+    if (rankStd <= 6.0) return { tier: 3, name: 'Decent' }
+    if (rankStd <= 10.0) return { tier: 4, name: 'Risky' }
     return { tier: 5, name: 'Volatile' }
   }
 
@@ -57,6 +59,18 @@ const PlayerModal = ({ player, onClose }) => {
     if (e.target === e.currentTarget) {
       onClose()
     }
+  }
+
+  // Get tier description
+  const getTierDescription = (tier) => {
+    const descriptions = {
+      1: "Elite consensus - experts strongly agree, very safe pick",
+      2: "Solid consensus - good expert agreement, safe pick", 
+      3: "Decent consensus - moderate expert agreement",
+      4: "Risky consensus - significant expert disagreement",
+      5: "Volatile consensus - experts widely disagree, high risk/reward"
+    }
+    return descriptions[tier] || "Unknown consensus level"
   }
 
   if (!player) return null
@@ -130,9 +144,10 @@ const PlayerModal = ({ player, onClose }) => {
                           Tier {tierInfo.tier} - {tierInfo.name}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {tierInfo.tier <= 2 && "High expert consensus - safe pick"}
-                          {tierInfo.tier === 3 && "Moderate expert consensus - decent pick"}
-                          {tierInfo.tier >= 4 && "Low expert consensus - risky pick"}
+                          {getTierDescription(tierInfo.tier)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Std Dev: {player.rank_std?.toFixed(2)} ({tierInfo.tier <= 2 ? 'Low' : tierInfo.tier <= 4 ? 'Medium' : 'High'} disagreement)
                         </div>
                       </div>
                     ) : (
