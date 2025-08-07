@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 # Position groups - keep the logic that works
 SCORING_INDEPENDENT = {'QB', 'K', 'DST'}  # No scoring variants
-SCORING_DEPENDENT = {'RB', 'WR', 'TE', 'FLEX'}  # Have scoring variants
+SCORING_DEPENDENT = {'RB', 'WR', 'TE', 'FLEX', 'ALL'}  # Have scoring variants
 
 class FantasyProsScraper:
     """Simple, clean FantasyPros scraper"""
@@ -117,6 +117,23 @@ class FantasyProsScraper:
             players_count = 0
             
             try:
+                # For ALL/FLEX positions, delete existing rankings first to avoid conflicts
+                if position in ['ALL', 'FLEX']:
+                    existing_count = session.query(Ranking).filter_by(
+                        position=position,
+                        year=year,
+                        week=week,
+                        scoring=scoring
+                    ).count()
+                    if existing_count > 0:
+                        session.query(Ranking).filter_by(
+                            position=position,
+                            year=year,
+                            week=week,
+                            scoring=scoring
+                        ).delete()
+                        logger.info(f"Deleted {existing_count} existing {position} {scoring} week {week} rankings")
+                
                 for player_data in data['players']:
                     # Get player info
                     player_id = str(player_data.get('player_id', ''))
@@ -125,7 +142,16 @@ class FantasyProsScraper:
                     
                     player_name = player_data.get('player_name', '')
                     team = player_data.get('player_team_id', '')
-                    pos = player_data.get('player_position_id', position)
+                    
+                    # For overall/flex rankings, use the requested position
+                    # For individual positions, use the player's actual position
+                    if position in ['ALL', 'FLEX']:
+                        pos = position  # Use ALL or FLEX as the position
+                        actual_pos = player_data.get('player_position_id', '')  # Store actual position separately
+                    else:
+                        pos = player_data.get('player_position_id', position)
+                        actual_pos = pos
+                    
                     bye_week = self._safe_int(player_data.get('player_bye_week'))
                     
                     # Upsert player
@@ -134,7 +160,7 @@ class FantasyProsScraper:
                         player = Player(
                             id=player_id,
                             name=player_name,
-                            position=pos,
+                            position=actual_pos,  # Use actual position for player record
                             team=team,
                             bye_week=bye_week
                         )
@@ -150,7 +176,8 @@ class FantasyProsScraper:
                         player_id=player_id,
                         year=year,
                         week=week,
-                        scoring=scoring
+                        scoring=scoring,
+                        position=pos  # Add position to the filter for ALL/FLEX
                     ).first()
                     
                     if not ranking:
@@ -165,7 +192,7 @@ class FantasyProsScraper:
                         )
                         session.add(ranking)
                     
-                    # Update ranking data
+                    # Update ranking data (works for both new and existing)
                     ranking.rank_ecr = self._safe_int(player_data.get('rank_ecr'))
                     ranking.rank_min = self._safe_int(player_data.get('rank_min'))
                     ranking.rank_max = self._safe_int(player_data.get('rank_max'))
